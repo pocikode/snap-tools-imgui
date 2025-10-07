@@ -13,7 +13,8 @@ find_package(OpenGL REQUIRED)
 
 # GLFW3
 pkg_check_modules(GLFW3 REQUIRED glfw3)
-include_directories(${GLFW3_INCLUDE_DIRS})
+include_directories(${CMAKE_SOURCE_DIR}/include ${GLFW3_INCLUDE_DIRS})
+link_directories(${GLFW3_LIBRARY_DIRS})
 
 # Dear ImGui
 set(IMGUI_DIR ./external/imgui)
@@ -33,12 +34,18 @@ target_include_directories(imgui PUBLIC
   ${GLFW3_INCLUDE_DIRS}
 )
 target_link_libraries(imgui
-  ${GLFW3_LIBRARIES}
+  glfw
   ${OPENGL_LIBRARIES}
 )
 target_compile_options(imgui PRIVATE ${GLFW3_CFLAGS_OTHER})
 
-set(APP_SOURCES src/main.cpp)
+set(APP_SOURCES
+  main.cpp
+  src/Application.cpp
+  src/UIManager.cpp
+)
+
+include_directories(include)
 
 add_executable(snap_tools ${APP_SOURCES})
-target_link_libraries(snap_tools imgui ${OPENGL_LIBRARIES})
+target_link_libraries(snap_tools imgui glfw ${OPENGL_LIBRARIES})
