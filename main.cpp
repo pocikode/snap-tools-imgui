@@ -1,62 +1,33 @@
-#include <stdio.h>
-#include <cstdio>
-#include <stdexcept>
+#include <iostream>
+#include <memory>
 #include "Application.h"
 
-void app_window_error_callback(int error, const char *description)
+int main()
 {
-    printf("Error %d: %s\n", error, description);
-}
-
-int main(void)
-{
-    // initialize GLFW
-    glfwSetErrorCallback(app_window_error_callback);
-    if (!glfwInit())
-    {
-        fprintf(stderr, "Failed to initialize GLFW\n");
-        return -1;
-    }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-
-    // create GLFW window
-    GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "KOPET", NULL, NULL);
-    if (!window)
-    {
-        fprintf(stderr, "Failed to create GLFW window\n");
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
-
-    // Make sure the window is visible
-    glfwShowWindow(window);
-    printf("Window created and shown...\n");
-
-    printf("Starting application...\n");
     try
     {
-        Application app(window);
+        auto app = std::make_unique<Application>();
 
-        while (!glfwWindowShouldClose(window) && app.running)
+        if (!app->Initialize())
         {
-            glfwPollEvents();
-            app.Render();
-            glfwSwapBuffers(window);
+            std::cerr << "Failed to initialize application" << std::endl;
+            return -1;
         }
 
-        app.Cleanup();
+        std::cout << "Starting cross-platform application..." << std::endl;
+        app->Run();
+
+        std::cout << "Application finished successfully" << std::endl;
+        return 0;
     }
     catch (const std::exception &e)
     {
-        fprintf(stderr, "Application error: %s\n", e.what());
+        std::cerr << "Application error: " << e.what() << std::endl;
+        return -1;
     }
-    glfwDestroyWindow(window);
-    glfwTerminate();
-
-    return 0;
+    catch (...)
+    {
+        std::cerr << "Unknown error occurred" << std::endl;
+        return -1;
+    }
 }

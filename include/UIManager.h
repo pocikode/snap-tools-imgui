@@ -1,17 +1,36 @@
+#ifndef UIMANAGER_H
+#define UIMANAGER_H
+
 #include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include <GLFW/glfw3.h>
 
 class UIManager
 {
 public:
-    UIManager(GLFWwindow *window);
+    UIManager();
     ~UIManager();
-    void Cleanup();
-    void RenderExample();
+
+    void Initialize();
+    void Shutdown();
+    void Update();
+    void Render();
 
 private:
-    ImGuiContext *m_context;
-    ImGuiIO *m_io;
+    void RenderMainMenuBar();
+    void RenderDemoWindow();
+    void RenderSettingsWindow();
+
+    // UI state
+    bool m_showDemo;
+    bool m_showSettings;
+
+    // Performance tracking to avoid string allocations
+    static constexpr int FRAME_HISTORY_SIZE = 120;
+    float m_frameTimeBuffer[FRAME_HISTORY_SIZE];
+    int m_frameTimeIndex;
+    float m_avgFrameTime;
+
+    // Cached strings to avoid repeated allocations
+    void UpdateFrameStats();
 };
+
+#endif // UIMANAGER_H
