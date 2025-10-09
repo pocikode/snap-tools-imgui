@@ -1,30 +1,28 @@
-#include "../../include/platform/LinuxPlatform.h"
+#include "platform/LinuxPlatform.h"
+#include "imgui.h"
+#include <SDL3/SDL_opengl.h>
+#include <SDL3/SDL_video.h>
+#include <iostream>
+#include <ostream>
 
 #ifdef __linux__
-#include "imgui_impl_sdl3.h"
 #include "imgui_impl_opengl3.h"
-#include <GL/gl3w.h>
+#include "imgui_impl_sdl3.h"
 
 namespace Platform
 {
+    LinuxPlatform::LinuxPlatform() : m_window(nullptr), m_glContext(nullptr), m_imguiContext(nullptr), m_io(nullptr), m_shouldClose(false) {}
 
-    LinuxPlatform::LinuxPlatform()
-        : m_window(nullptr), m_glContext(nullptr), m_imguiContext(nullptr), m_shouldClose(false)
-    {
-    }
-
-    LinuxPlatform::~LinuxPlatform()
-    {
-        Shutdown();
-    }
+    LinuxPlatform::~LinuxPlatform() { Shutdown(); }
 
     bool LinuxPlatform::Initialize(const WindowConfig &config)
     {
         m_config = config;
 
         // Initialize SDL3
-        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMEPAD) != 0)
+        if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD))
         {
+            std::cout << "Failed to init SDL" << std::endl;
             return false;
         }
 
@@ -38,38 +36,53 @@ namespace Platform
         SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
         // Create window
-        Uint32 window_flags = SDL_WINDOW_OPENGL;
+        float main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+
+        SDL_WindowFlags window_flags = SDL_WINDOW_OPENGL;
         if (config.resizable)
         {
             window_flags |= SDL_WINDOW_RESIZABLE;
         }
+        window_flags |= SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
 
-        m_window = SDL_CreateWindow(config.title.c_str(), config.width, config.height, window_flags);
-        if (!m_window)
+        m_window = SDL_CreateWindow(config.title.c_str(), (int)(config.width * main_scale), (int)(config.height * main_scale), window_flags);
+        if (m_window == nullptr)
         {
+            std::cout << "Failed to create SDL window" << std::endl;
             return false;
         }
 
-        // Create OpenGL context
-        m_glContext = SDL_GL_CreateContext(m_window);
-        if (!m_glContext)
+        if (!InitializeRenderer())
         {
             return false;
         }
-
-        SDL_GL_MakeCurrent(m_window, m_glContext);
+        if (!InitializeImGui())
+        {
+            return false;
+        }
 
         // Enable VSync
         if (config.vsync)
         {
             SDL_GL_SetSwapInterval(1);
         }
+        SDL_SetWindowPosition(m_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+        SDL_ShowWindow(m_window);
 
-        // Initialize gl3w
-        if (gl3wInit() != 0)
+        return true;
+    }
+
+    bool LinuxPlatform::InitializeRenderer()
+    {
+        // Create OpenGL context
+        m_glContext = SDL_GL_CreateContext(m_window);
+        if (m_glContext == nullptr)
         {
+            std::cout << "Failed to create SDL renderer" << std::endl;
             return false;
         }
+
+        SDL_GL_MakeCurrent(m_window, m_glContext);
 
         return true;
     }
@@ -80,9 +93,9 @@ namespace Platform
         m_imguiContext = ImGui::CreateContext();
         ImGui::SetCurrentContext(m_imguiContext);
 
-        ImGuiIO &io = ImGui::GetIO();
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+        ImGuiIO &m_io = ImGui::GetIO();
+        m_io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        m_io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
         ImGui::StyleColorsDark();
 
@@ -95,12 +108,7 @@ namespace Platform
     void LinuxPlatform::Shutdown()
     {
         ShutdownImGui();
-
-        if (m_glContext)
-        {
-            SDL_GL_DeleteContext(m_glContext);
-            m_glContext = nullptr;
-        }
+        ShutdownRenderer();
 
         if (m_window)
         {
@@ -111,10 +119,22 @@ namespace Platform
         SDL_Quit();
     }
 
-    bool LinuxPlatform::ShouldClose()
+    void LinuxPlatform::ShutdownRenderer()
     {
-        return m_shouldClose;
+        if (m_glContext)
+        {
+            SDL_GL_DestroyContext(m_glContext);
+        }
     }
+
+    void LinuxPlatform::ShutdownImGui()
+    {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL3_Shutdown();
+        ImGui::DestroyContext();
+    }
+
+    bool LinuxPlatform::ShouldClose() { return m_shouldClose; }
 
     void LinuxPlatform::PollEvents()
     {
@@ -136,10 +156,59 @@ namespace Platform
 
     void LinuxPlatform::SwapBuffers()
     {
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(m_window);
     }
 
-    // ... Additional method implementations would go here ...
+    void LinuxPlatform::NewFrame() {}
+
+    void LinuxPlatform::RenderFrame() {}
+
+    void LinuxPlatform::ImGuiNewFrame()
+    {
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+    }
+
+    void LinuxPlatform::ImGuiRender()
+    {
+        ImGui::Render();
+        // glClearColor();
+        // glClear(GL_COLOR_BUFFER_BIT);
+    }
+
+    void LinuxPlatform::ClearBackground(float r, float g, float b, float a)
+    {
+        glViewport(0, 0, (int)m_io->DisplaySize.x, (int)m_io->DisplaySize.y);
+        glClearColor(r, g, b, a);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
+    void LinuxPlatform::SetWindowTitle(const std::string &title)
+    {
+        SDL_SetWindowTitle(m_window, title.c_str());
+    }
+
+    void LinuxPlatform::GetWindowSize(int &width, int &height)
+    {
+        SDL_GetWindowSize(m_window, &width, &height);
+    }
+
+    void LinuxPlatform::SetWindowSize(int width, int height)
+    {
+        SDL_SetWindowSize(m_window, width, height);
+    }
+
+    void *LinuxPlatform::GetNativeWindow()
+    {
+        return m_window;
+    }
+
+    void *LinuxPlatform::GetNativeRenderer()
+    {
+        return nullptr;
+    }
 
 } // namespace Platform
 
@@ -168,5 +237,5 @@ namespace Platform
     void LinuxPlatform::ImGuiRender() {}
     void *LinuxPlatform::GetNativeWindow() { return nullptr; }
     void *LinuxPlatform::GetNativeRenderer() { return nullptr; }
-}
+} // namespace Platform
 #endif

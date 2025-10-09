@@ -6,7 +6,7 @@
 
 #ifdef __linux__
 #include <SDL3/SDL.h>
-#include <GL/gl3w.h>
+#include <SDL3/SDL_opengl.h>
 #endif
 
 namespace Platform
@@ -56,6 +56,7 @@ namespace Platform
 #endif
 
         ImGuiContext *m_imguiContext;
+        ImGuiIO *m_io;
         bool m_shouldClose;
         WindowConfig m_config;
     };

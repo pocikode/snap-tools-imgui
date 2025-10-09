@@ -1,6 +1,5 @@
 #include "Application.h"
 #include "platform/IPlatform.h"
-#include <stdio.h>
 #include <iostream>
 
 Application::Application()

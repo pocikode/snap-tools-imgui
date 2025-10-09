@@ -1,4 +1,5 @@
 #include "platform/IPlatform.h"
+#include <memory>
 
 #ifdef __APPLE__
 #include "platform/MacOSPlatform.h"

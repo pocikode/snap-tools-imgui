@@ -1,6 +1,4 @@
 #include "UIManager.h"
-#include <stdexcept>
-#include <cstring>
 #include <cstdio>
 
 UIManager::UIManager()
