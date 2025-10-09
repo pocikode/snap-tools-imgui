@@ -52,15 +52,6 @@ namespace Platform
             return false;
         }
 
-        if (!InitializeRenderer())
-        {
-            return false;
-        }
-        if (!InitializeImGui())
-        {
-            return false;
-        }
-
         // Enable VSync
         if (config.vsync)
         {
@@ -93,9 +84,9 @@ namespace Platform
         m_imguiContext = ImGui::CreateContext();
         ImGui::SetCurrentContext(m_imguiContext);
 
-        ImGuiIO &m_io = ImGui::GetIO();
-        m_io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-        m_io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+        m_io = &ImGui::GetIO();
+        m_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+        m_io->ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
         ImGui::StyleColorsDark();
 
@@ -124,14 +115,20 @@ namespace Platform
         if (m_glContext)
         {
             SDL_GL_DestroyContext(m_glContext);
+            m_glContext = nullptr;
         }
     }
 
     void LinuxPlatform::ShutdownImGui()
     {
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplSDL3_Shutdown();
-        ImGui::DestroyContext();
+        if (m_imguiContext)
+        {
+            ImGui_ImplOpenGL3_Shutdown();
+            ImGui_ImplSDL3_Shutdown();
+            ImGui::DestroyContext(m_imguiContext);
+            m_imguiContext = nullptr;
+            m_io = nullptr;
+        }
     }
 
     bool LinuxPlatform::ShouldClose() { return m_shouldClose; }
