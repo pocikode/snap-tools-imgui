@@ -77,13 +77,29 @@ bool Application::Initialize()
 
 void Application::Run()
 {
+    std::cout << "Entering main loop..." << std::endl;
+    
     while (m_running && !m_platform->ShouldClose())
     {
-        m_platform->PollEvents();
-        Update();
-        Render();
-        m_platform->SwapBuffers();
+        try {
+            m_platform->PollEvents();
+            Update();
+            Render();
+            m_platform->SwapBuffers();
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Error in main loop: " << e.what() << std::endl;
+            m_running = false;
+            break;
+        }
+        catch (...) {
+            std::cerr << "Unknown error in main loop" << std::endl;
+            m_running = false;
+            break;
+        }
     }
+    
+    std::cout << "Exiting main loop..." << std::endl;
 }
 
 void Application::Update()
@@ -97,22 +113,41 @@ void Application::Update()
 
 void Application::Render()
 {
+    static int frame_count = 0;
+    frame_count++;
+    
+    if (frame_count == 1) {
+        std::cout << "Starting first render frame..." << std::endl;
+    }
+    
     // Clear background
+    if (frame_count == 1) std::cout << "Calling ClearBackground..." << std::endl;
     m_platform->ClearBackground(0.45f, 0.55f, 0.60f, 1.0f);
 
     // Start new frame
+    if (frame_count == 1) std::cout << "Calling NewFrame..." << std::endl;
     m_platform->NewFrame();
+    
+    if (frame_count == 1) std::cout << "Calling ImGuiNewFrame..." << std::endl;
     m_platform->ImGuiNewFrame();
 
     // Render UI
+    if (frame_count == 1) std::cout << "Calling UI Render..." << std::endl;
     if (m_ui)
     {
         m_ui->Render();
     }
 
     // Render ImGui
+    if (frame_count == 1) std::cout << "Calling ImGuiRender..." << std::endl;
     m_platform->ImGuiRender();
+    
+    if (frame_count == 1) std::cout << "Calling RenderFrame..." << std::endl;
     m_platform->RenderFrame();
+    
+    if (frame_count == 1) {
+        std::cout << "First render frame completed" << std::endl;
+    }
 }
 
 void Application::Shutdown()

@@ -3,6 +3,11 @@
 
 #include "IPlatform.h"
 #include "imgui.h"
+#include "imgui_impl_metal.h"
+#include "imgui_impl_sdl3.h"
+
+// Forward declarations to avoid including Objective-C headers in C++
+struct SDL_Window;
 
 #ifdef __OBJC__
 @class NSWindow;
@@ -54,12 +59,21 @@ namespace Platform
         void *GetNativeRenderer() override;
 
     private:
-        void *m_window;
+        SDL_Window *m_window;
         void *m_metalView;
         void *m_metalDevice;
+        void *m_metalLayer;
+        void *m_renderPassDescriptor;
         void *m_metalCommandQueue;
+        void *m_commandBuffer;
+        void *m_renderEncoder;
         void *m_viewController;
+        void *m_drawable; // Current Metal drawable
+
+        // Dear ImGui
         ImGuiContext *m_imguiContext;
+        ImGuiIO *m_io;
+        ImGuiStyle *m_style;
 
         bool m_shouldClose;
         WindowConfig m_config;

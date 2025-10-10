@@ -1,8 +1,8 @@
 #ifndef IPLATFORM_H
 #define IPLATFORM_H
 
-#include <string>
 #include <memory>
+#include <string>
 
 // Forward declarations
 struct ImGuiContext;
