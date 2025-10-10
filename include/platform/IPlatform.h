@@ -1,8 +1,9 @@
 #ifndef IPLATFORM_H
 #define IPLATFORM_H
 
-#include <string>
+#include "imgui.h"
 #include <memory>
+#include <string>
 
 // Forward declarations
 struct ImGuiContext;
@@ -37,24 +38,19 @@ namespace Platform
         virtual void Shutdown() = 0;
         virtual bool ShouldClose() = 0;
         virtual void PollEvents() = 0;
-        virtual void SwapBuffers() = 0;
         virtual void SetWindowTitle(const std::string &title) = 0;
         virtual void GetWindowSize(int &width, int &height) = 0;
         virtual void SetWindowSize(int width, int height) = 0;
 
         // Renderer management
         virtual bool InitializeRenderer() = 0;
-        virtual void ShutdownRenderer() = 0;
         virtual void NewFrame() = 0;
         virtual void RenderFrame() = 0;
-        virtual void ClearBackground(float r, float g, float b, float a) = 0;
+        virtual void SetClearColor(ImVec4 &color) = 0;
         virtual RendererType GetRendererType() const = 0;
 
         // ImGui integration
         virtual bool InitializeImGui() = 0;
-        virtual void ShutdownImGui() = 0;
-        virtual void ImGuiNewFrame() = 0;
-        virtual void ImGuiRender() = 0;
 
         // Platform-specific getters
         virtual void *GetNativeWindow() = 0;

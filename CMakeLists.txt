@@ -13,7 +13,7 @@ elseif(WIN32)
     set(PLATFORM_NAME "windows") 
     set(PLATFORM_BACKEND "directx11")
 elseif(UNIX)
-    set(PLATFORM_NAME "linux")
+    set(PLATFORM_NAME "unix")
     set(PLATFORM_BACKEND "opengl3")
 endif()
 

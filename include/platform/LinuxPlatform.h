@@ -1,13 +1,9 @@
-#ifndef LINUX_PLATFORM_H
-#define LINUX_PLATFORM_H
+#ifndef UNIX_PLATFORM_H
+#define UNIX_PLATFORM_H
 
 #include "IPlatform.h"
 #include "imgui.h"
-
-#ifdef __linux__
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_opengl.h>
-#endif
 
 namespace Platform
 {
@@ -23,44 +19,37 @@ namespace Platform
         void Shutdown() override;
         bool ShouldClose() override;
         void PollEvents() override;
-        void SwapBuffers() override;
         void SetWindowTitle(const std::string &title) override;
         void GetWindowSize(int &width, int &height) override;
         void SetWindowSize(int width, int height) override;
 
         // Renderer management
         bool InitializeRenderer() override;
-        void ShutdownRenderer() override;
         void NewFrame() override;
         void RenderFrame() override;
-        void ClearBackground(float r, float g, float b, float a) override;
+        void SetClearColor(ImVec4 &color) override;
         RendererType GetRendererType() const override { return RendererType::OpenGL3; }
 
         // ImGui integration
         bool InitializeImGui() override;
-        void ShutdownImGui() override;
-        void ImGuiNewFrame() override;
-        void ImGuiRender() override;
 
         // Platform-specific getters
         void *GetNativeWindow() override;
         void *GetNativeRenderer() override;
 
     private:
-#ifdef __linux__
         SDL_Window *m_window;
         SDL_GLContext m_glContext;
-#else
-        void *m_window;
-        void *m_glContext;
-#endif
+        WindowConfig m_config;
 
         ImGuiContext *m_imguiContext;
         ImGuiIO *m_io;
+        ImGuiStyle *m_style;
+        ImVec4 m_clearColor;
         bool m_shouldClose;
-        WindowConfig m_config;
+        char *m_glslVersion;
     };
 
 } // namespace Platform
 
-#endif // LINUX_PLATFORM_H
+#endif // UNIX_PLATFORM_H

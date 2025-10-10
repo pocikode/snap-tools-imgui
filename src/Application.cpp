@@ -37,20 +37,6 @@ bool Application::Initialize()
         return false;
     }
 
-    // Initialize renderer
-    if (!m_platform->InitializeRenderer())
-    {
-        std::cerr << "Failed to initialize renderer" << std::endl;
-        return false;
-    }
-
-    // Initialize ImGui
-    if (!m_platform->InitializeImGui())
-    {
-        std::cerr << "Failed to initialize ImGui" << std::endl;
-        return false;
-    }
-
     // Create UI manager
     m_ui = std::make_unique<UIManager>();
     m_ui->Initialize();
@@ -77,12 +63,14 @@ bool Application::Initialize()
 
 void Application::Run()
 {
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
     while (m_running && !m_platform->ShouldClose())
     {
         m_platform->PollEvents();
+        m_platform->SetClearColor(clear_color);
         Update();
         Render();
-        m_platform->SwapBuffers();
     }
 }
 
@@ -97,12 +85,8 @@ void Application::Update()
 
 void Application::Render()
 {
-    // Clear background
-    m_platform->ClearBackground(0.45f, 0.55f, 0.60f, 1.0f);
-
-    // Start new frame
+    // Start the Dear ImGui frame
     m_platform->NewFrame();
-    m_platform->ImGuiNewFrame();
 
     // Render UI
     if (m_ui)
@@ -110,8 +94,7 @@ void Application::Render()
         m_ui->Render();
     }
 
-    // Render ImGui
-    m_platform->ImGuiRender();
+    // Rendering
     m_platform->RenderFrame();
 }
 
